@@ -1,18 +1,43 @@
 package com.example.jhert_000.googlemapstest;
 
+import android.app.AlertDialog;
+import android.content.Intent;
+import android.content.IntentSender;
+import android.location.LocationManager;
+import android.provider.Settings;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.location.Location;
+import android.app.Activity;
+import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
+import android.widget.Toast;
 
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
+import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import com.google.android.gms.maps.model.PolylineOptions;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+import java.util.Timer;
+import java.util.TimerTask;
+
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, ConnectionCallbacks, OnConnectionFailedListener {
+
+    private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
+    private static final int INTERVAL_REFRESH = 10 * 1000;   // 10 seconds
 
     private GoogleMap mMap;
+    private GoogleApiClient gAC;
+    private Timer timer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,7 +46,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+            mapFragment.getMapAsync(this);
+
+        gAC = new GoogleApiClient.Builder(this)
+                .addApi(LocationServices.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
     }
 
 
@@ -39,8 +70,158 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        //LatLng harrisonburg = new LatLng(38.437424, -78.867912);
+        //mMap.addMarker(new MarkerOptions().position(harrisonburg).title("Marker in Harrisonburg"));
+        //mMap.moveCamera(CameraUpdateFactory.newLatLng(harrisonburg));
+
+        setCurrentLocationMarker();
     }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        // if GoogleMap object is not already available, get it
+        if (mMap == null) {
+            FragmentManager manager = getSupportFragmentManager();
+            SupportMapFragment fragment =
+                    (SupportMapFragment) manager.findFragmentById(R.id.map);
+            mMap = fragment.getMap();
+        }
+
+        // if GoogleMap object is available, configure it
+        if (mMap != null) {
+            mMap.getUiSettings().setZoomControlsEnabled(true);
+        }
+
+        gAC.connect();
+    }
+
+    @Override
+    protected void onStop() {
+        gAC.disconnect();
+
+        super.onStop();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // if returning from connection failed resolution activity...
+        if (requestCode == CONNECTION_FAILURE_RESOLUTION_REQUEST) {
+            // do additional processing
+        }
+    }
+
+    //**************************************************************
+    // Private methods
+    //****************************************************************
+    private void updateMap(){
+        if (gAC.isConnected()){
+            setCurrentLocationMarker();
+        }
+        displayRun();
+    }
+
+    private void setCurrentLocationMarker(){
+        if (mMap != null) {
+            // get current location
+            Location location = LocationServices.FusedLocationApi
+                    .getLastLocation(gAC);
+
+            if (location != null) {
+                // zoom in on current location
+                mMap.animateCamera(
+                        CameraUpdateFactory.newCameraPosition(
+                                new CameraPosition.Builder()
+                                        .target(new LatLng(location.getLatitude(),
+                                                location.getLongitude()))
+                                        .zoom(16.5f)
+                                        .bearing(0)
+                                        .tilt(25)
+                                        .build()));
+
+                // add a marker for the current location
+                mMap.clear();      // clear old marker(s)
+                mMap.addMarker(    // add new marker
+                        new MarkerOptions()
+                                .position(new LatLng(location.getLatitude(),
+                                        location.getLongitude()))
+                                .title("You are here"));
+            }
+        }
+    }
+
+    private void displayRun(){
+        if (mMap != null) {
+            //locationList = db.getLocations();
+            PolylineOptions polyline = new PolylineOptions();
+            /*if (locationList.size() > 0) {
+                for (Location l : locationList) {
+                    LatLng point = new LatLng(
+                            l.getLatitude(), l.getLongitude());
+                    polyline.add(point);
+                }
+            }
+            map.addPolyline(polyline);*/
+        }
+    }
+
+    private void setMapToRefresh(){
+        timer = new Timer();
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                MapsActivity.this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateMap();
+                    }
+                });
+            }
+        };
+        timer.schedule(task, INTERVAL_REFRESH, INTERVAL_REFRESH);
+    }
+
+    //**************************************************************
+    // Implement ConnectionCallbacks interface
+    //****************************************************************
+    @Override
+    public void onConnected(Bundle dataBundle) {
+        updateMap();
+        setMapToRefresh();
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        timer.cancel();
+        Toast.makeText(this, "Disconnected", Toast.LENGTH_SHORT).show();
+    }
+
+    //**************************************************************
+    // Implement OnConnectionFailedListener
+    //****************************************************************
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        // if Google Play services can resolve the error, display activity
+        if (connectionResult.hasResolution()) {
+            try {
+                // start an Activity that tries to resolve the error
+                connectionResult.startResolutionForResult(this,
+                        CONNECTION_FAILURE_RESOLUTION_REQUEST);
+            }
+            catch (IntentSender.SendIntentException e) {
+                e.printStackTrace();
+            }
+        }
+        else {
+            new AlertDialog.Builder(this)
+                    .setMessage("Connection failed. Error code: "
+                            + connectionResult.getErrorCode())
+                    .show();
+        }
+    }
+
+
 }
