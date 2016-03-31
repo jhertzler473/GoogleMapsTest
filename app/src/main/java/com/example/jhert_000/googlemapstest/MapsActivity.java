@@ -3,14 +3,17 @@ package com.example.jhert_000.googlemapstest;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.location.Location;
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.ContextCompat;
 import android.widget.Toast;
 
 import com.google.android.gms.location.LocationServices;
@@ -127,6 +130,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void setCurrentLocationMarker(){
         if (mMap != null) {
             // get current location
+            if ( ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED ) {
+
+                ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},
+                        1);
+            }
+
+
             Location location = LocationServices.FusedLocationApi
                     .getLastLocation(gAC);
 
