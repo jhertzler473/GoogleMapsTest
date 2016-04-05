@@ -14,6 +14,8 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.location.LocationServices;
@@ -29,11 +31,12 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
 import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
 import com.google.android.gms.maps.model.PolylineOptions;
+import android.view.View.OnClickListener;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, ConnectionCallbacks, OnConnectionFailedListener {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, ConnectionCallbacks, OnConnectionFailedListener, OnClickListener {
 
     private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
     private static final int INTERVAL_REFRESH = 10 * 1000;   // 10 seconds
@@ -41,6 +44,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     private GoogleApiClient gAC;
     private Timer timer;
+
+
+    private Button backButton;
+    private Button favButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +63,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
+
+        backButton = (Button) findViewById(R.id.backButton);
+        favButton = (Button) findViewById(R.id.favButton);
+    }
+
+
+    public void onClick(View v){
+        switch(v.getId()){
+            case R.id.backButton:
+                //code for moving back to cache select screen
+                break;
+            case R.id.favButton:
+                //code for favoriting and saving a cache to be continued
+                break;
+        }
     }
 
 
@@ -72,10 +94,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Add a marker in Sydney and move the camera
-        //LatLng harrisonburg = new LatLng(38.437424, -78.867912);
-        //mMap.addMarker(new MarkerOptions().position(harrisonburg).title("Marker in Harrisonburg"));
-        //mMap.moveCamera(CameraUpdateFactory.newLatLng(harrisonburg));
 
         setCurrentLocationMarker();
     }
