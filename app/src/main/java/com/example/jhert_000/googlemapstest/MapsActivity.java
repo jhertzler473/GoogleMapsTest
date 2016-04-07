@@ -72,7 +72,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onClick(View v){
         switch(v.getId()){
             case R.id.backButton:
-                //code for moving back to cache select screen
+                //code for moving back to Cache Select screen
                 break;
             case R.id.favButton:
                 //code for favoriting and saving a cache to be continued
