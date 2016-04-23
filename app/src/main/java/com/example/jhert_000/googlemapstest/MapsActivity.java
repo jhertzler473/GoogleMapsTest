@@ -1,9 +1,12 @@
 package com.example.jhert_000.googlemapstest;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.location.LocationManager;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
@@ -19,12 +22,15 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -40,6 +46,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
     private static final int INTERVAL_REFRESH = 10 * 1000;   // 10 seconds
+
+
 
     private GoogleMap mMap;
     private GoogleApiClient gAC;
@@ -66,13 +74,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         backButton = (Button) findViewById(R.id.backButton);
         favButton = (Button) findViewById(R.id.favButton);
+
+        backButton.setOnClickListener(this);
+        favButton.setOnClickListener(this);
     }
 
 
     public void onClick(View v){
         switch(v.getId()){
             case R.id.backButton:
-                //code for moving back to Cache Select screen
+                finish();
                 break;
             case R.id.favButton:
                 //code for favoriting and saving a cache to be continued
@@ -140,12 +151,26 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     //****************************************************************
     private void updateMap(){
         if (gAC.isConnected()){
-            setCurrentLocationMarker();
+            Marker currentMarker = setCurrentLocationMarker();
+            Double lat = getIntent().getDoubleExtra("lat", 0);
+            Double lon = getIntent().getDoubleExtra("lon", 0);
+
+
+            Marker cacheMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)).title("Cache"));
+
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+
+            builder.include(currentMarker.getPosition());
+            builder.include(cacheMarker.getPosition());
+            LatLngBounds bounds = builder.build();
+            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds,200, 200, 40);
+            mMap.animateCamera(cu);
         }
         displayRun();
     }
 
-    private void setCurrentLocationMarker(){
+    private Marker setCurrentLocationMarker(){
+        Marker cacheMarker = null;
         if (mMap != null) {
             // get current location
             if ( ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED ) {
@@ -172,13 +197,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 // add a marker for the current location
                 mMap.clear();      // clear old marker(s)
-                mMap.addMarker(    // add new marker
+                cacheMarker =  mMap.addMarker(    // add new marker
                         new MarkerOptions()
                                 .position(new LatLng(location.getLatitude(),
                                         location.getLongitude()))
                                 .title("You are here"));
             }
         }
+        return cacheMarker;
     }
 
     private void displayRun(){
