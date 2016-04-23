@@ -1,4 +1,23 @@
 <resources>
-    <string name="app_name">GoogleMapsTest</string>
+    <string name="app_name">Geocaching</string>
     <string name="title_activity_maps">Map</string>
+    <string name="import_button_label">Create New Cache</string>
+    <string name="map_button_label">Map</string>
+    <string name="export_button_label">Delete</string>
+    <string name="favorites_list_label">Favorites List</string>
+    <string name="known_caches_label">Known Caches</string>
+    <string name="selected_cache">none</string>
+    <string name="selected_cache_label">Selected Cache</string>
+    <string name="cache_name">Name:</string>
+    <string name="latitude_label">Latitude:</string>
+    <string name="longitude_label">Longitude:</string>
+    <string name="favorite_check">Mark as Favorite?</string>
+    <string name="add_button">Add Cache</string>
+    <string name="cancel_button">Back</string>
+
+    <string-array name="split_array">
+        <item>Test1</item>
+        <item>Test2</item>
+    </string-array>
+
 </resources>
